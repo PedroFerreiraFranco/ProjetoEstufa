@@ -20,11 +20,11 @@ void loop()
   lcd.clear();
  Serial.print(Porcento);
  Serial.println("%");
- if(Porcento*1.81 <=60)
+ if(Porcento <=40)
  {
  Serial.println("Irrigando: ");
  lcd.print("Irrigando: ");
- lcd.print(Porcento*1.81);// Imprime um texto
+ lcd.print(Porcento);// Imprime um texto
  lcd.print("%"); // Imprime um texto
  digitalWrite(LED, HIGH);
  digitalWrite(porta_rele, HIGH);
@@ -33,7 +33,7 @@ void loop()
  else
  {
   lcd.print("Umidade: ");
-  lcd.print(Porcento*1.81);
+  lcd.print(Porcento);
   lcd.print("%"); // Imprime um texto
  digitalWrite(LED, LOW);
  digitalWrite(porta_rele, LOW);
