@@ -1,64 +1,49 @@
-#include <dht11.h>
-#define DHT11PIN 10
+#include <Wire.h>  // Biblioteca para comunicação I2C
+#include <LiquidCrystal_I2C.h>  // Biblioteca para o LCD I2C
 
-dht11 DHT11;
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // Endereço I2C do LCD, 16 colunas, 2 linhas
+const int sensorPin = A0;  // Pino do sensor de umidade
+const int ledPin = 13;  // Pino do LED vermelho
+const int relayPin = 4; // Pino do relé para controlar o motor
 
-int umidade;
-#include <LiquidCrystal.h>
-LiquidCrystal lcd(12, 13, 7, 6, 5, 4);
-int porta_rele = 11;
+// Definir os limites mínimo e máximo de leitura do sensor
+const int umidadeSoloMin = 0;  // Leitura mínima do sensor
+const int umidadeSoloMax = 1023;  // Leitura máxima do sensor
 
-#define LED 8
+// Definir os limites mínimo e máximo de umidade do solo em porcentagem
+const int umidadePorcentagemMin = 0;  // Umidade do solo mínima em porcentagem
+const int umidadePorcentagemMax = 100;  // Umidade do solo máxima em porcentagem
 
-void setup()
-{
-  pinMode(LED,OUTPUT);
- Serial.begin(9600);
- lcd.begin(16, 2);
- pinMode(porta_rele, OUTPUT);
+void setup() {
+  lcd.init();  // Inicializa o LCD
+  lcd.backlight();  // Liga a luz de fundo do LCD
+  pinMode(sensorPin, INPUT);  // Define o pino do sensor de umidade como entrada
+  pinMode(ledPin, OUTPUT);  // Define o pino do LED como saída
+  pinMode(relayPin, OUTPUT); // Define o pino do relé como saída
 }
-/*--------------------------------------------------*/
-void mostrarDHT11(){ 
-    int chk = DHT11.read(DHT11PIN);
-    
-   lcd.print("Umidade Ar(%):");
-   lcd.print((float)DHT11.humidity, 2);
-   
-   lcd.setCursor(2, 1);
-   lcd.print("Temp Ar (C):");
-   lcd.print((float)DHT11.temperature, 2);
-}
-/*--------------------------------------------------*/
-void mostrarIrrigando(int Porcento){
-  lcd.print("Irrigando: ");
-  lcd.print(Porcento);// Imprime um texto
-  lcd.print("%"); // Imprime um texto
-  digitalWrite(LED, HIGH);
-  digitalWrite(porta_rele, HIGH);
-}
-/*--------------------------------------------------*/
-void mostrarUmidade(int Porcento){
-  lcd.print("Umidade Solo:");
-  lcd.print(Porcento);
-  lcd.print("%"); // Imprime um texto
-  digitalWrite(LED, LOW);
-  digitalWrite(porta_rele, LOW);
-}
-/*--------------------------------------------------*/
-void loop(){
- umidade = analogRead(A0);
- int Porcento = map(umidade, 1023, 0, 0, 100);
- lcd.clear();
- mostrarDHT11();
- delay(5000);
- lcd.clear();
- if(Porcento <=40){
-  mostrarIrrigando(Porcento);
-  }else{
-  mostrarUmidade(Porcento);
- }
 
- delay(5000);
- 
- 
+void loop() {
+  // Leitura da umidade do solo
+  int umidadeSolo = analogRead(sensorPin);
+
+  // Mapear a leitura do sensor para a faixa de 0 a 100%
+  int umidadePorcentagem = map(umidadeSolo, umidadeSoloMin, umidadeSoloMax, umidadePorcentagemMax, umidadePorcentagemMin); // Invertido os valores min e max
+
+  // Exibe a umidade do solo em porcentagem no LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Umidade do Solo:");
+  lcd.setCursor(0, 1);
+  lcd.print(umidadePorcentagem);
+  lcd.print("%");
+
+  // Verifica se a umidade do solo está abaixo de um determinado valor
+  if (umidadePorcentagem < 50) {  // Invertido o operador de comparação
+    digitalWrite(ledPin, HIGH);  // Liga o LED vermelho
+    digitalWrite(relayPin, HIGH); // Liga o relé (aciona o motor)
+  } else {
+    digitalWrite(ledPin, LOW);  // Desliga o LED vermelho
+    digitalWrite(relayPin, LOW); // Desliga o relé (desliga o motor)
+  }
+  
+  delay(1000);  // Aguarda 1 segundo antes da próxima leitura
 }
